@@ -1,7 +1,16 @@
+buildscript {
+    ext {
+        queryDslVersion = "5.0.0"
+    }
+}
+
 plugins {
     id 'org.springframework.boot' version '2.6.3'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+
+    // QueryDsl
+    id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
 }
 
 group = 'com.pretchel'
@@ -16,6 +25,7 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -33,18 +43,27 @@ dependencies {
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
+
+    //test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+
+
 
     implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.2'
+
+    // test
+    implementation 'org.assertj:assertj-core:3.11.1'
 
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+
+
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -58,9 +77,47 @@ dependencies {
 
     implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.3.8'
 
+    // https://mvnrepository.com/artifact/com.github.iamport/iamport-rest-client-java
+    //implementation 'com.github.iamport:iamport-rest-client-java:0.2.17'
+    // https://mvnrepository.com/artifact/com.github.iamport/iamport-rest-client-java
+    //implementation 'com.github.iamport:iamport-rest-client-java:0.2.0'
+
+    // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+    // QueryDSL
+    implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
+    implementation "com.querydsl:querydsl-apt:${queryDslVersion}"
 
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// ============================ QueryDSL 설정 =================================
+def querydslDir = "$buildDir/generated/'querydsl'"
+
+// jpa 사용여부, 사용 경로 설정
+querydsl {
+    jpa = true
+    querydslSourcesDir = querydslDir
+}
+
+// 빌드 시 사용할 sourceSet 추가 설젇은 왜 해?
+sourceSets {
+    main.java.srcDir querydslDir
+}
+
+// querydsl 컴파일 시 사용 옵션 설정 까지 해야돼?
+compileQuerydsl {
+    options.annotationProcessorPath = configurations.querydsl
+}
+
+// querydsl이 compileClassPath 상속하도록 설정
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    querydsl.extendsFrom compileClasspath
 }
